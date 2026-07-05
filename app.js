@@ -1,9 +1,10 @@
 // Kawa's Cafe — app.js
 // Preact + HTM, no build tools
-const { html, render, useState, useEffect, useRef } = htmPreact;
+const { html, render, useState, useEffect } = htmPreact;
 
 // ─── Menu Data ───
-// Descriptions written like a real cafe chalkboard, not marketing copy
+// Descriptions read like a chalkboard, not ad copy.
+// "featured" flag highlights signature items — real cafes always do this.
 const MENU = [
     {
         id: 1,
@@ -19,7 +20,8 @@ const MENU = [
         desc: 'Double shot over oat milk and ice. Our best seller.',
         price: 4.50,
         category: 'Coffee',
-        img: '🥛'
+        img: '🥛',
+        featured: true
     },
     {
         id: 3,
@@ -51,7 +53,8 @@ const MENU = [
         desc: 'Scrambled eggs, aged cheddar, sourdough. Simple done right.',
         price: 7.50,
         category: 'Mains',
-        img: '🥪'
+        img: '🥪',
+        featured: true
     },
     {
         id: 7,
@@ -107,7 +110,8 @@ function Nav({ walletBalance, cartCount, onOpenCart, onOpenTopup }) {
 function MenuCard({ item, onAdd }) {
     return html`
         <div class="menu-item">
-            <div class="menu-item-img">${item.img}</div>
+            <div class="menu-item-visual">${item.img}</div>
+            ${item.featured && html`<span class="menu-item-tag">Popular</span>`}
             <h3 class="menu-item-name">${item.name}</h3>
             <p class="menu-item-desc">${item.desc}</p>
             <div class="menu-item-footer">
@@ -138,7 +142,7 @@ function CartDrawer({ isOpen, onClose, cart, walletBalance, onCheckout, onRemove
                     ${cart.length === 0 ? html`
                         <div class="cart-empty">
                             <p>Nothing here yet.</p>
-                            <p style="font-size:0.8rem">Browse the menu and add something good.</p>
+                            <p class="hint">Browse the menu and add something good.</p>
                         </div>
                     ` : html`
                         ${cart.map(item => html`
@@ -284,9 +288,12 @@ function App() {
         />
 
         <section class="hero">
+            <span class="hero-tag">Order ahead · Pick up when ready</span>
             <h2>Good coffee, good food,${' '}nothing complicated.</h2>
-            <p>Order ahead, pick up when it's ready. Pay with your Kawa wallet.</p>
+            <p>We keep things simple so you can focus on what matters. Browse, order, and pay with your Kawa wallet.</p>
         </section>
+
+        <div class="divider">✦</div>
 
         <div class="categories">
             ${CATEGORIES.map(cat => html`
@@ -306,9 +313,39 @@ function App() {
             `)}
         </div>
 
+        <section class="story">
+            <h3>A neighborhood spot since 2024</h3>
+            <p>
+                Kawa's started as a small corner in Bandung where people could get honest coffee 
+                without the fuss. No gimmicks, no seventeen-step pour-over rituals — just good 
+                beans roasted well and served with care.
+            </p>
+            <p>
+                We roast weekly, bake daily, and try not to overthink it.
+            </p>
+            <div class="story-detail">
+                <span>Bandung, Indonesia</span>
+                <span>Est. 2024</span>
+                <span>Open daily 7am–9pm</span>
+            </div>
+        </section>
+
         <footer class="site-footer">
-            <span>© 2026 Kawa's. Bandung, Indonesia.</span>
-            <a href="#">About</a>
+            <div class="footer-inner">
+                <div>
+                    <div class="footer-brand">kawa's</div>
+                    <div class="footer-address">
+                        Jl. Braga No. 42<br/>
+                        Bandung, West Java 40111
+                    </div>
+                </div>
+                <ul class="footer-links">
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">Instagram</a></li>
+                </ul>
+            </div>
+            <p class="footer-copy">© 2026 Kawa's Cafe. All rights reserved.</p>
         </footer>
 
         <${CartDrawer}
