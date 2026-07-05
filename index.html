@@ -32,9 +32,14 @@
         /* Smooth scrolling and transitions */
         * { transition: background-color 0.2s, transform 0.1s; }
     </style>
+    
+    <!-- Using the Standalone UMD build of HTM + Preact to prevent CORS issues when opening from file:// -->
+    <script src="https://unpkg.com/htm/preact/standalone.umd.js"></script>
 </head>
 <body class="bg-amber-50 text-slate-800 min-h-screen flex flex-col">
     <div id="app" class="flex-grow flex flex-col"></div>
-    <script type="module" src="./app.js"></script>
+    
+    <!-- Standard script tag (not module) so it works instantly when double-clicking the file -->
+    <script src="./app.js"></script>
 </body>
 </html>

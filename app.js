@@ -1,8 +1,5 @@
-import { h, Component, render } from 'https://unpkg.com/preact?module';
-import htm from 'https://unpkg.com/htm?module';
-import { useState, useEffect } from 'https://unpkg.com/preact/hooks/dist/hooks.module.js?module';
-
-const html = htm.bind(h);
+// Extract globals provided by htmPreact UMD build
+const { html, render, useState, useEffect } = htmPreact;
 
 // Mock Data
 const MOCK_MENU = [
