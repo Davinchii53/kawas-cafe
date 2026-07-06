@@ -1,9 +1,9 @@
 // Kawa Noodles — app.js
 // Standalone Preact + HTM, zero npm install
-// Styled as a high-character brutalist design (de-slopped)
+// Clean, high-density Developer Console / POS Terminal interface
 const { html, render, useState, useEffect } = htmPreact;
 
-// ─── Menu Data (Stamps/Text replace plain emojis for a crafted look) ───
+// ─── Menu Data ───
 const MENU = [
     {
         id: 1,
@@ -11,9 +11,7 @@ const MENU = [
         desc: 'Savoury, salty, hot chili oil base. Choose your spice level.',
         price: 3.50,
         category: 'Noodles',
-        stamp: '🔥 SETAN',
-        customizable: true,
-        featured: true
+        customizable: true
     },
     {
         id: 2,
@@ -21,9 +19,7 @@ const MENU = [
         desc: 'Sweet dark soy glaze tossed with fiery chili paste. Bold and sweet.',
         price: 3.50,
         category: 'Noodles',
-        stamp: '🌶️ IBLIS',
-        customizable: true,
-        featured: false
+        customizable: true
     },
     {
         id: 3,
@@ -31,9 +27,7 @@ const MENU = [
         desc: 'Zero heat. Tossed in aromatic chicken fat, topped with dried chicken floss.',
         price: 3.00,
         category: 'Noodles',
-        stamp: '✨ ANGEL',
-        customizable: false,
-        featured: false
+        customizable: false
     },
     {
         id: 4,
@@ -41,9 +35,7 @@ const MENU = [
         desc: 'Golden minced shrimp balls wrapped in crispy pastry threads (3 pcs).',
         price: 2.50,
         category: 'Dimsum',
-        stamp: '🍤 RAMB',
-        customizable: false,
-        featured: true
+        customizable: false
     },
     {
         id: 5,
@@ -51,9 +43,7 @@ const MENU = [
         desc: 'Crispy fried shrimp dumplings stuffed with melted mozzarella (3 pcs).',
         price: 2.50,
         category: 'Dimsum',
-        stamp: '🧀 KEJU',
-        customizable: false,
-        featured: false
+        customizable: false
     },
     {
         id: 6,
@@ -61,9 +51,7 @@ const MENU = [
         desc: 'Minced chicken & shrimp spring roll in crispy tofu skin wrapper (3 pcs).',
         price: 2.20,
         category: 'Dimsum',
-        stamp: '🌯 LUMPIA',
-        customizable: false,
-        featured: false
+        customizable: false
     },
     {
         id: 7,
@@ -71,9 +59,7 @@ const MENU = [
         desc: 'Fruity syrup ice loaded with jelly, coco gel, and sweetened milk.',
         price: 2.00,
         category: 'Drinks',
-        stamp: '❄️ GEND',
-        customizable: false,
-        featured: false
+        customizable: false
     },
     {
         id: 8,
@@ -81,9 +67,7 @@ const MENU = [
         desc: 'Sharp lime juice, sweet basil seeds, and coconut slices over crushed ice.',
         price: 1.80,
         category: 'Drinks',
-        stamp: '🧊 PCO',
-        customizable: false,
-        featured: false
+        customizable: false
     }
 ];
 
@@ -136,6 +120,18 @@ function App() {
         { id: 'tx_001', amount: 25.00, type: 'topup', created_at: new Date(Date.now() - 600000).toISOString() }
     ]);
 
+    // Track simulated time
+    const [timeStr, setTimeStr] = useState('');
+    useEffect(() => {
+        const updateTime = () => {
+            const now = new Date();
+            setTimeStr(now.toTimeString().split(' ')[0]);
+        };
+        updateTime();
+        const interval = setInterval(updateTime, 1000);
+        return () => clearInterval(interval);
+    }, []);
+
     const showToast = (msg) => {
         setToast({ msg, show: true });
         setTimeout(() => setToast({ msg: '', show: false }), 3000);
@@ -176,7 +172,7 @@ function App() {
         showToast(`Added ${cartEntry.name} (Lvl ${spiceLevel}) to bag`);
     };
 
-    const handleQuickAdd = (item) => {
+    const handleAddClick = (item) => {
         if (item.customizable) {
             setCustomizeItem(item);
             setSpiceLevel(1);
@@ -216,7 +212,6 @@ function App() {
     };
 
     const handleTopup = (amount) => {
-        // Update wallet
         setWallet(prev => prev + amount);
         
         // Log transaction to simulated ledger
@@ -235,7 +230,6 @@ function App() {
             return;
         }
 
-        // Deduct wallet balance
         setWallet(prev => prev - total);
 
         // Log transaction to simulated ledger (Immutable audit logging)
@@ -286,41 +280,48 @@ function App() {
         <!-- Navigation -->
         <header class="nav">
             <div class="nav-logo-group">
-                <span class="nav-logo-icon">🌶️</span>
-                <a href="#" class="nav-brand" onClick=${() => setView('customer')}>KAWA <span>NOODLES</span></a>
+                <a href="#" class="nav-brand" onClick=${() => setView('customer')}>
+                    🌶️ KAWA_NOODLES<span>.console</span>
+                </a>
             </div>
             
             <div class="nav-controls">
                 <div class="role-selector">
-                    <button class="role-btn ${view === 'customer' ? 'active' : ''}" onClick=${() => setView('customer')}>Order</button>
+                    <button class="role-btn ${view === 'customer' ? 'active' : ''}" onClick=${() => setView('customer')}>ORDER</button>
                     <button class="role-btn ${view === 'admin' ? 'active' : ''}" onClick=${() => setView('admin')}>KDS</button>
-                    <button class="role-btn ${view === 'ledger' ? 'active' : ''}" onClick=${() => setView('ledger')}>Audit Ledger</button>
+                    <button class="role-btn ${view === 'ledger' ? 'active' : ''}" onClick=${() => setView('ledger')}>LEDGER</button>
                 </div>
                 
                 ${view === 'customer' && html`
                     <div class="wallet-pill">
-                        <span>$${wallet.toFixed(2)}</span>
+                        <span>BAL: $${wallet.toFixed(2)}</span>
                         <button onClick=${() => setTopupOpen(true)} title="Add funds">+</button>
                     </div>
                     <button class="cart-btn" onClick=${() => setCartOpen(true)}>
-                        Bag
-                        <span class="cart-badge">${cartCount}</span>
+                        BAG <span class="cart-badge">[${cartCount}]</span>
                     </button>
                 `}
             </div>
         </header>
 
+        <!-- Status Indicator Strip -->
+        <div class="status-strip">
+            <div class="status-item">STATUS: <span style="color: var(--accent-green);">ONLINE</span></div>
+            <div class="status-item">WS_GATEWAY: <span style="color: var(--accent-green);">ACTIVE (postgres_changes)</span></div>
+            <div class="status-item">TERM_TIME: <span>${timeStr}</span></div>
+        </div>
+
         <!-- Customer Storefront View -->
         ${view === 'customer' && html`
             <section class="hero">
-                <div class="hero-layout">
-                    <div>
-                        <span class="hero-badge">Est. 2026</span>
-                        <h2>Frictionless. <span>Savage Spice.</span></h2>
+                <div class="hero-banner">
+                    <div class="hero-banner-title">
+                        <h2>KAWA NOODLES <span>v1.0.4</span></h2>
+                        <div style="font-size: 0.7rem; color: var(--accent-amber); margin-top: 0.25rem;">SPICY NOODLE ORDERING TERMINAL</div>
                     </div>
-                    <div>
-                        <p>High-throughput spicy noodles inspired by street stalls. Custom modifier system, instant wallet balance deductions.</p>
-                    </div>
+                    <p class="hero-banner-desc">
+                        Standard POS interface for high-throughput ordering. Custom spice modifier levels (1-8) and add-on configurations. Transactions validated against closed-loop balance.
+                    </p>
                 </div>
             </section>
 
@@ -331,25 +332,25 @@ function App() {
                         class="cat-btn ${activeCategory === cat ? 'active' : ''}"
                         onClick=${() => setActiveCategory(cat)}
                     >
-                        ${cat}
+                        [${cat.toUpperCase()}]
                     </button>
                 `)}
             </div>
 
             <div class="menu-grid">
                 ${filteredMenu.map(item => html`
-                    <div class="menu-item ${item.featured ? 'featured' : ''}" key=${item.id}>
-                        ${item.customizable && html`<span class="menu-item-badge">Custom Lvl 1-8</span>`}
-                        <div class="menu-item-visual">
-                            <span class="menu-item-visual-logo">${item.name.split(' ')[0]}</span>
-                            <span class="menu-item-visual-overlay">${item.stamp.split(' ')[0]}</span>
+                    <div class="menu-row" key=${item.id}>
+                        <div class="menu-item-info">
+                            <div class="menu-item-title-row">
+                                <span class="menu-item-name">${item.id.toString().padStart(2, '0')}. ${item.name}</span>
+                                ${item.customizable && html`<span class="menu-item-badge">MODS: LVL 1-8</span>`}
+                            </div>
+                            <p class="menu-item-desc">${item.desc}</p>
                         </div>
-                        <h3 class="menu-item-name">${item.name}</h3>
-                        <p class="menu-item-desc">${item.desc}</p>
-                        <div class="menu-item-footer">
+                        <div class="menu-item-action">
                             <span class="menu-item-price">$${item.price.toFixed(2)}</span>
-                            <button class="customize-btn" onClick=${() => handleQuickAdd(item)}>
-                                ${item.customizable ? 'Options' : 'Add'}
+                            <button class="action-btn ${item.customizable ? '' : 'primary'}" onClick=${() => handleAddClick(item)}>
+                                ${item.customizable ? '[ CONFIGURE ]' : '[ ADD ]'}
                             </button>
                         </div>
                     </div>
@@ -361,23 +362,20 @@ function App() {
         ${view === 'admin' && html`
             <div class="kds-container">
                 <div class="kds-header">
-                    <div>
-                        <h2 class="kds-title">Active Order Tickets</h2>
-                        <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Live order updates via simulated WebSocket subscription.</p>
-                    </div>
+                    <h2 class="kds-title">ACTIVE ORDER TICKETS (KDS)</h2>
+                    <p style="font-size: 0.75rem; color: var(--text-muted-term); margin-top: 0.25rem;">Real-time feed connected to profiles/orders tables.</p>
                 </div>
 
                 <div class="kds-grid">
                     ${kdsOrders.filter(o => o.status !== 'completed').length === 0 ? html`
-                        <div class="text-center py-20 w-full" style="grid-column: 1 / -1; color: var(--text-muted);">
-                            <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">📭</span>
-                            <p>No active noodle orders on the board.</p>
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 0; color: var(--text-muted-term);">
+                            [ NO INCOMING TICKETS ON QUEUE ]
                         </div>
                     ` : html`
                         ${kdsOrders.filter(o => o.status !== 'completed').map(order => html`
                             <div class="kds-ticket ${order.status === 'preparing' ? 'preparing' : ''}" key=${order.id}>
                                 <div class="ticket-header">
-                                    <span class="ticket-id font-display">${order.id}</span>
+                                    <span class="ticket-id">${order.id.toUpperCase()}</span>
                                     <span>${new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                                 </div>
                                 <div class="ticket-items">
@@ -387,10 +385,10 @@ function App() {
                                                 <span>${item.quantity}x ${item.name}</span>
                                             </div>
                                             ${item.spice_level > 0 && html`
-                                                <div class="ticket-item-modifiers">Spice Lvl ${item.spice_level}</div>
+                                                <div class="ticket-item-modifiers">>> SPICE LEVEL: ${item.spice_level}</div>
                                             `}
                                             ${item.extra_toppings.length > 0 && html`
-                                                <div class="ticket-item-modifiers" style="color: var(--brand-yellow); font-size: 0.7rem;">
+                                                <div class="ticket-item-modifiers" style="color: var(--accent-amber);">
                                                     + ${item.extra_toppings.join(', ')}
                                                 </div>
                                             `}
@@ -399,9 +397,9 @@ function App() {
                                 </div>
                                 <div class="ticket-footer">
                                     ${order.status === 'pending' ? html`
-                                        <button class="kds-action-btn prepare" onClick=${() => handleKdsStatusChange(order.id, 'preparing')}>Prepare</button>
+                                        <button class="kds-action-btn prepare" onClick=${() => handleKdsStatusChange(order.id, 'preparing')}>[ START PREPARATION ]</button>
                                     ` : html`
-                                        <button class="kds-action-btn complete" onClick=${() => handleKdsStatusChange(order.id, 'completed')}>Serve</button>
+                                        <button class="kds-action-btn complete" onClick=${() => handleKdsStatusChange(order.id, 'completed')}>[ SERVE TICKET ]</button>
                                     `}
                                 </div>
                             </div>
@@ -415,34 +413,32 @@ function App() {
         ${view === 'ledger' && html`
             <div class="ledger-container">
                 <div class="ledger-header">
-                    <h2 class="kds-title">Immutable Audit Trail</h2>
-                    <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">
-                        Simulated trigger-based transactions ledger verifying Level 3 security audit logging.
-                    </p>
+                    <h2 class="kds-title">WALLETS & AUDIT LEDGER</h2>
+                    <p style="font-size: 0.75rem; color: var(--text-muted-term); margin-top: 0.25rem;">Immutable transactions log captured via after-update trigger.</p>
                 </div>
                 
                 <table class="ledger-table">
                     <thead>
                         <tr>
                             <th class="ledger-th">TXID</th>
-                            <th class="ledger-th">Type</th>
-                            <th class="ledger-th">Value Change</th>
-                            <th class="ledger-th">Timestamp</th>
+                            <th class="ledger-th">TX_TYPE</th>
+                            <th class="ledger-th">DELTA</th>
+                            <th class="ledger-th">TIMESTAMP</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${ledger.map(tx => html`
                             <tr class="ledger-tr" key=${tx.id}>
-                                <td class="ledger-td font-display" style="font-weight: 700;">${tx.id}</td>
-                                <td class="ledger-td" style="text-transform: uppercase; font-size: 0.8rem; font-weight: 700;">
-                                    ${tx.type}
+                                <td class="ledger-td" style="font-weight: 700;">${tx.id.toUpperCase()}</td>
+                                <td class="ledger-td" style="font-weight: 500;">
+                                    ${tx.type.toUpperCase()}
                                 </td>
                                 <td class="ledger-td">
                                     <span class="amount-badge ${tx.amount > 0 ? 'positive' : 'negative'}">
                                         ${tx.amount > 0 ? '+' : ''}$${tx.amount.toFixed(2)}
                                     </span>
                                 </td>
-                                <td class="ledger-td text-muted">${new Date(tx.created_at).toLocaleString()}</td>
+                                <td class="ledger-td text-muted-term">${new Date(tx.created_at).toLocaleString()}</td>
                             </tr>
                         `)}
                     </tbody>
@@ -459,13 +455,13 @@ function App() {
                         <div class="modal-header">
                             <div>
                                 <h3 class="modal-title">${customizeItem.name}</h3>
-                                <p class="modal-desc">Select modifications</p>
+                                <p class="modal-desc">Configure item options</p>
                             </div>
                             <button class="close-btn" onClick=${() => setCustomizeItem(null)}>×</button>
                         </div>
 
                         <div>
-                            <div class="modal-section-title">Select Spice Level</div>
+                            <div class="modal-section-title">Select Spice Level (1-8)</div>
                             <div class="spice-grid">
                                 ${[1, 2, 3, 4, 5, 6, 7, 8].map(lvl => html`
                                     <button 
@@ -473,7 +469,7 @@ function App() {
                                         class="spice-opt ${spiceLevel === lvl ? 'selected' : ''}"
                                         onClick=${() => setSpiceLevel(lvl)}
                                     >
-                                        Lvl ${lvl}
+                                        LVL ${lvl}
                                     </button>
                                 `)}
                             </div>
@@ -505,12 +501,12 @@ function App() {
 
                             <div class="modal-footer-action">
                                 <div>
-                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Calculated Price</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted-term);">ITEM PRICE</div>
                                     <span class="modal-total-price">
                                         $${(customizeItem.price + selectedAddons.reduce((s, a) => s + a.price, 0)).toFixed(2)}
                                     </span>
                                 </div>
-                                <button class="add-cart-confirm" onClick=${handleAddCustomizeToCart}>Add to Bag</button>
+                                <button class="add-cart-confirm" onClick=${handleAddCustomizeToCart}>[ ADD TO BAG ]</button>
                             </div>
                         </div>
                     </div>
@@ -523,16 +519,15 @@ function App() {
             ${cartOpen && html`<div class="overlay" onClick=${() => setCartOpen(false)}></div>`}
             <div class="cart-drawer ${cartOpen ? 'open' : ''}">
                 <div class="cart-header">
-                    <h2 class="modal-title">Shopping Bag</h2>
+                    <h2 class="modal-title">SHOPPING BAG</h2>
                     <button class="close-btn" onClick=${() => setCartOpen(false)}>×</button>
                 </div>
 
                 <div class="cart-body">
                     ${cart.length === 0 ? html`
                         <div class="cart-empty">
-                            <span style="font-size: 3rem;">🛒</span>
-                            <p class="font-display" style="font-weight: 700;">Bag is empty</p>
-                            <p style="font-size: 0.8rem;">Add some noodles to get started!</p>
+                            <p style="font-weight: 700; color: var(--text-muted-term); margin-bottom: 0.5rem;">[ BAG IS EMPTY ]</p>
+                            <p>Select items from menu terminal to fill.</p>
                         </div>
                     ` : html`
                         ${cart.map(item => html`
@@ -540,19 +535,19 @@ function App() {
                                 <div class="cart-item-details">
                                     <h4>${item.name}</h4>
                                     <div class="cart-item-modifiers">
-                                        ${item.spice_level > 0 && html`<span>🔥 Spice Level ${item.spice_level}</span>`}
-                                        ${item.extra_toppings.map(t => html`<span>➕ ${t}</span>`)}
+                                        ${item.spice_level > 0 && html`<span>>> SPICE LEVEL: ${item.spice_level}</span>`}
+                                        ${item.extra_toppings.map(t => html`<span>>> ADD: ${t}</span>`)}
                                     </div>
                                     <span class="cart-item-price">$${(item.price * item.quantity).toFixed(2)}</span>
                                 </div>
                                 
-                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem;">
+                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
                                     <div class="qty-controls">
                                         <button class="qty-btn" onClick=${() => updateCartQty(item.id, -1)}>−</button>
                                         <span class="qty-num">${item.quantity}</span>
                                         <button class="qty-btn" onClick=${() => updateCartQty(item.id, 1)}>+</button>
                                     </div>
-                                    <button class="cart-remove-btn" onClick=${() => updateCartQty(item.id, -item.quantity)}>Remove</button>
+                                    <button class="cart-remove-btn" onClick=${() => updateCartQty(item.id, -item.quantity)}>[remove]</button>
                                 </div>
                             </div>
                         `)}
@@ -562,13 +557,13 @@ function App() {
                 ${cart.length > 0 && html`
                     <div class="cart-footer">
                         <div class="cart-footer-row">
-                            <span>Balance Available</span>
-                            <span style="font-weight: 700; color: ${wallet >= cartTotal ? 'var(--success)' : 'var(--brand-red)'}">
+                            <span>WALLET BALANCE</span>
+                            <span style="font-weight: 700; color: ${wallet >= cartTotal ? 'var(--accent-green)' : 'var(--accent-red)'}">
                                 $${wallet.toFixed(2)}
                             </span>
                         </div>
                         <div class="cart-footer-row total">
-                            <span>Total Due</span>
+                            <span>TOTAL DUE</span>
                             <span>$${cartTotal.toFixed(2)}</span>
                         </div>
                         <button 
@@ -576,7 +571,7 @@ function App() {
                             disabled=${wallet < cartTotal}
                             onClick=${handleCheckout}
                         >
-                            ${wallet >= cartTotal ? 'Pay & Order' : 'Insufficient Balance'}
+                            ${wallet >= cartTotal ? '[ CONFIRM CHECKOUT ]' : '[ INSUFFICIENT BALANCE ]'}
                         </button>
                     </div>
                 `}
@@ -591,8 +586,8 @@ function App() {
                     <div class="modal-box">
                         <div class="modal-header">
                             <div>
-                                <h3 class="modal-title">Load Wallet</h3>
-                                <p class="modal-desc">Select amount to top up</p>
+                                <h3 class="modal-title">TOP UP BAL</h3>
+                                <p class="modal-desc">Simulated balance incrementation</p>
                             </div>
                             <button class="close-btn" onClick=${() => setTopupOpen(false)}>×</button>
                         </div>
@@ -609,7 +604,7 @@ function App() {
                                     </button>
                                 `)}
                             </div>
-                            <button class="modal-cancel" onClick=${() => setTopupOpen(false)}>Cancel</button>
+                            <button class="modal-cancel" onClick=${() => setTopupOpen(false)}>[ CANCEL ]</button>
                         </div>
                     </div>
                 </div>
@@ -617,7 +612,7 @@ function App() {
         `}
 
         <!-- Toast Notification -->
-        <div class="toast ${toast.show ? 'show' : ''}">${toast.msg}</div>
+        <div class="toast ${toast.show ? 'show' : ''}">${toast.msg.toUpperCase()}</div>
     `;
 }
 
