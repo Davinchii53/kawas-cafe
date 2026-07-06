@@ -1,80 +1,89 @@
 // Kawa Noodles — app.js
-// Standalone Preact + HTM, zero npm install, fast-paced street food vibe
+// Standalone Preact + HTM, zero npm install
+// Styled as a high-character brutalist design (de-slopped)
 const { html, render, useState, useEffect } = htmPreact;
 
-// ─── Menu Data ───
+// ─── Menu Data (Stamps/Text replace plain emojis for a crafted look) ───
 const MENU = [
     {
         id: 1,
-        name: 'Mie Setan',
-        desc: 'Savoury, salty, and extremely spicy. Customizable spice level.',
+        name: 'MIE SETAN',
+        desc: 'Savoury, salty, hot chili oil base. Choose your spice level.',
         price: 3.50,
         category: 'Noodles',
-        img: '🌶️',
-        customizable: true
+        stamp: '🔥 SETAN',
+        customizable: true,
+        featured: true
     },
     {
         id: 2,
-        name: 'Mie Iblis',
-        desc: 'Sweet, savoury, and spicy. Tossed in dark sweet soy sauce.',
+        name: 'MIE IBLIS',
+        desc: 'Sweet dark soy glaze tossed with fiery chili paste. Bold and sweet.',
         price: 3.50,
         category: 'Noodles',
-        img: '😈',
-        customizable: true
+        stamp: '🌶️ IBLIS',
+        customizable: true,
+        featured: false
     },
     {
         id: 3,
-        name: 'Mie Angel',
-        desc: 'Zero spice, highly savoury. Sprinkled with chicken floss and green onions.',
+        name: 'MIE ANGEL',
+        desc: 'Zero heat. Tossed in aromatic chicken fat, topped with dried chicken floss.',
         price: 3.00,
         category: 'Noodles',
-        img: '👼',
-        customizable: false
+        stamp: '✨ ANGEL',
+        customizable: false,
+        featured: false
     },
     {
         id: 4,
-        name: 'Udang Rambutan',
-        desc: 'Crispy fried shrimp balls wrapped in crunchy noodle threads.',
+        name: 'UDANG RAMBUTAN',
+        desc: 'Golden minced shrimp balls wrapped in crispy pastry threads (3 pcs).',
         price: 2.50,
         category: 'Dimsum',
-        img: '🍤',
-        customizable: false
+        stamp: '🍤 RAMB',
+        customizable: false,
+        featured: true
     },
     {
         id: 5,
-        name: 'Udang Keju',
-        desc: 'Fried shrimp dumplings oozing with molten melted cheese.',
+        name: 'UDANG KEJU',
+        desc: 'Crispy fried shrimp dumplings stuffed with melted mozzarella (3 pcs).',
         price: 2.50,
         category: 'Dimsum',
-        img: '🧀',
-        customizable: false
+        stamp: '🧀 KEJU',
+        customizable: false,
+        featured: false
     },
     {
         id: 6,
-        name: 'Lumpia Kulit Tahu',
-        desc: 'Fresh minced chicken and shrimp wrapped in crispy bean curd skin.',
+        name: 'LUMPIA TAHU',
+        desc: 'Minced chicken & shrimp spring roll in crispy tofu skin wrapper (3 pcs).',
         price: 2.20,
         category: 'Dimsum',
-        img: '🌯',
-        customizable: false
+        stamp: '🌯 LUMPIA',
+        customizable: false,
+        featured: false
     },
     {
         id: 7,
-        name: 'Es Genderuwo',
-        desc: 'Cold, sweet syrup ice filled with jelly, fruit cocktails, and condensed milk.',
+        name: 'ES GENDERUWO',
+        desc: 'Fruity syrup ice loaded with jelly, coco gel, and sweetened milk.',
         price: 2.00,
         category: 'Drinks',
-        img: '🍧',
-        customizable: false
+        stamp: '❄️ GEND',
+        customizable: false,
+        featured: false
     },
     {
         id: 8,
-        name: 'Es Pocong',
-        desc: 'Refreshing lime and mint ice, topped with sliced jelly.',
+        name: 'ES POCONG',
+        desc: 'Sharp lime juice, sweet basil seeds, and coconut slices over crushed ice.',
         price: 1.80,
         category: 'Drinks',
-        img: '🍹',
-        customizable: false
+        stamp: '🧊 PCO',
+        customizable: false,
+        featured: false
     }
 ];
 
@@ -86,16 +95,14 @@ const ADDONS = [
 
 const CATEGORIES = ['All', 'Noodles', 'Dimsum', 'Drinks'];
 
-// ─── Main App Component ───
 function App() {
-    const [view, setView] = useState('customer'); // 'customer' or 'admin'
+    const [view, setView] = useState('customer'); // 'customer', 'admin' (KDS), 'ledger' (audit)
     const [wallet, setWallet] = useState(25.00);
     const [cart, setCart] = useState([]);
     const [cartOpen, setCartOpen] = useState(false);
     const [topupOpen, setTopupOpen] = useState(false);
-    const [customizeItem, setCustomizeItem] = useState(null); // Item currently being customized
+    const [customizeItem, setCustomizeItem] = useState(null);
     
-    // Customization selections
     const [spiceLevel, setSpiceLevel] = useState(1);
     const [selectedAddons, setSelectedAddons] = useState([]);
     const [activeCategory, setActiveCategory] = useState('All');
@@ -103,37 +110,35 @@ function App() {
     // Toast notifications
     const [toast, setToast] = useState({ msg: '', show: false });
 
-    // KDS orders (Kitchen Display System)
+    // KDS tickets
     const [kdsOrders, setKdsOrders] = useState([
         {
-            id: 'ord_108',
+            id: 'ord_7812',
             created_at: new Date(Date.now() - 300000).toISOString(),
             status: 'preparing',
             items: [
-                { name: 'Mie Setan', quantity: 2, spice_level: 5, extra_toppings: ['Extra Udang Keju (1 pc)'] },
-                { name: 'Es Genderuwo', quantity: 1, spice_level: 0, extra_toppings: [] }
+                { name: 'MIE SETAN', quantity: 2, spice_level: 5, extra_toppings: ['Extra Udang Keju (1 pc)'] },
+                { name: 'ES GENDERUWO', quantity: 1, spice_level: 0, extra_toppings: [] }
             ]
         },
         {
-            id: 'ord_109',
+            id: 'ord_9012',
             created_at: new Date(Date.now() - 60000).toISOString(),
             status: 'pending',
             items: [
-                { name: 'Mie Iblis', quantity: 1, spice_level: 8, extra_toppings: ['Extra Pangsit Goreng (2 pcs)'] }
+                { name: 'MIE IBLIS', quantity: 1, spice_level: 8, extra_toppings: ['Extra Pangsit Goreng (2 pcs)'] }
             ]
         }
+    ]);
+
+    // Simulated Immutable Ledger (Level 3 requirement)
+    const [ledger, setLedger] = useState([
+        { id: 'tx_001', amount: 25.00, type: 'topup', created_at: new Date(Date.now() - 600000).toISOString() }
     ]);
 
     const showToast = (msg) => {
         setToast({ msg, show: true });
         setTimeout(() => setToast({ msg: '', show: false }), 3000);
-    };
-
-    // Open modifier panel for item customization
-    const openCustomize = (item) => {
-        setCustomizeItem(item);
-        setSpiceLevel(1);
-        setSelectedAddons([]);
     };
 
     const handleAddonToggle = (addon) => {
@@ -153,7 +158,6 @@ function App() {
             id: `${customizeItem.id}_${spiceLevel}_${selectedAddons.map(a => a.name).join('_')}`,
             menu_item_id: customizeItem.id,
             name: customizeItem.name,
-            img: customizeItem.img,
             price: itemFinalPrice,
             spice_level: customizeItem.customizable ? spiceLevel : 0,
             extra_toppings: selectedAddons.map(a => a.name),
@@ -173,9 +177,10 @@ function App() {
     };
 
     const handleQuickAdd = (item) => {
-        // Noodles must go through customization for spice selection
         if (item.customizable) {
-            openCustomize(item);
+            setCustomizeItem(item);
+            setSpiceLevel(1);
+            setSelectedAddons([]);
             return;
         }
 
@@ -183,7 +188,6 @@ function App() {
             id: `${item.id}_0_none`,
             menu_item_id: item.id,
             name: item.name,
-            img: item.img,
             price: item.price,
             spice_level: 0,
             extra_toppings: [],
@@ -211,6 +215,19 @@ function App() {
         }).filter(Boolean));
     };
 
+    const handleTopup = (amount) => {
+        // Update wallet
+        setWallet(prev => prev + amount);
+        
+        // Log transaction to simulated ledger
+        const txId = `tx_${Math.floor(100 + Math.random() * 900)}`;
+        setLedger(prev => [
+            { id: txId, amount, type: 'topup', created_at: new Date().toISOString() },
+            ...prev
+        ]);
+        showToast(`Loaded $${amount.toFixed(2)} to wallet`);
+    };
+
     const handleCheckout = () => {
         const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         if (wallet < total) {
@@ -218,11 +235,18 @@ function App() {
             return;
         }
 
-        // Deduct from wallet
+        // Deduct wallet balance
         setWallet(prev => prev - total);
 
-        // Generate checkout ticket for KDS simulation
-        const newOrderId = `ord_${Math.floor(100 + Math.random() * 900)}`;
+        // Log transaction to simulated ledger (Immutable audit logging)
+        const txId = `tx_${Math.floor(100 + Math.random() * 900)}`;
+        setLedger(prev => [
+            { id: txId, amount: -total, type: 'purchase', created_at: new Date().toISOString() },
+            ...prev
+        ]);
+
+        // Push order ticket to KDS
+        const newOrderId = `ord_${Math.floor(1000 + Math.random() * 9000)}`;
         const newTicket = {
             id: newOrderId,
             created_at: new Date().toISOString(),
@@ -238,7 +262,7 @@ function App() {
         setKdsOrders(prev => [newTicket, ...prev]);
         setCart([]);
         setCartOpen(false);
-        showToast(`Order placed successfully! Ticket: ${newOrderId}`);
+        showToast(`Paid $${total.toFixed(2)}. Ticket: ${newOrderId}`);
     };
 
     const handleKdsStatusChange = (orderId, newStatus) => {
@@ -259,17 +283,18 @@ function App() {
     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     return html`
-        <!-- Header -->
+        <!-- Navigation -->
         <header class="nav">
             <div class="nav-logo-group">
-                <span class="nav-logo-icon">🍜</span>
-                <a href="#" class="nav-brand">KAWA <span>NOODLES</span></a>
+                <span class="nav-logo-icon">🌶️</span>
+                <a href="#" class="nav-brand" onClick=${() => setView('customer')}>KAWA <span>NOODLES</span></a>
             </div>
             
             <div class="nav-controls">
                 <div class="role-selector">
-                    <button class="role-btn ${view === 'customer' ? 'active' : ''}" onClick=${() => setView('customer')}>Customer</button>
-                    <button class="role-btn ${view === 'admin' ? 'active' : ''}" onClick=${() => setView('admin')}>Kitchen (KDS)</button>
+                    <button class="role-btn ${view === 'customer' ? 'active' : ''}" onClick=${() => setView('customer')}>Order</button>
+                    <button class="role-btn ${view === 'admin' ? 'active' : ''}" onClick=${() => setView('admin')}>KDS</button>
+                    <button class="role-btn ${view === 'ledger' ? 'active' : ''}" onClick=${() => setView('ledger')}>Audit Ledger</button>
                 </div>
                 
                 ${view === 'customer' && html`
@@ -278,19 +303,25 @@ function App() {
                         <button onClick=${() => setTopupOpen(true)} title="Add funds">+</button>
                     </div>
                     <button class="cart-btn" onClick=${() => setCartOpen(true)}>
-                        🛒 Bag
+                        Bag
                         <span class="cart-badge">${cartCount}</span>
                     </button>
                 `}
             </div>
         </header>
 
-        <!-- Customer View -->
+        <!-- Customer Storefront View -->
         ${view === 'customer' && html`
             <section class="hero">
-                <span class="hero-badge">Indonesian Spicy Noodle Bar</span>
-                <h2>Savage Spice. <span>Instant Wallet checkout.</span></h2>
-                <p>Pick your spice level from 1 to 8, select premium dimsum add-ons, and checkout instantly with your digital wallet.</p>
+                <div class="hero-layout">
+                    <div>
+                        <span class="hero-badge">Est. 2026</span>
+                        <h2>Frictionless. <span>Savage Spice.</span></h2>
+                    </div>
+                    <div>
+                        <p>High-throughput spicy noodles inspired by street stalls. Custom modifier system, instant wallet balance deductions.</p>
+                    </div>
+                </div>
             </section>
 
             <div class="categories">
@@ -307,15 +338,18 @@ function App() {
 
             <div class="menu-grid">
                 ${filteredMenu.map(item => html`
-                    <div class="menu-item" key=${item.id}>
-                        ${item.customizable && html`<span class="menu-item-badge">Spice Lvl 1-8</span>`}
-                        <div class="menu-item-visual">${item.img}</div>
+                    <div class="menu-item ${item.featured ? 'featured' : ''}" key=${item.id}>
+                        ${item.customizable && html`<span class="menu-item-badge">Custom Lvl 1-8</span>`}
+                        <div class="menu-item-visual">
+                            <span class="menu-item-visual-logo">${item.name.split(' ')[0]}</span>
+                            <span class="menu-item-visual-overlay">${item.stamp.split(' ')[0]}</span>
+                        </div>
                         <h3 class="menu-item-name">${item.name}</h3>
                         <p class="menu-item-desc">${item.desc}</p>
                         <div class="menu-item-footer">
                             <span class="menu-item-price">$${item.price.toFixed(2)}</span>
                             <button class="customize-btn" onClick=${() => handleQuickAdd(item)}>
-                                ${item.customizable ? 'Customize' : 'Add'}
+                                ${item.customizable ? 'Options' : 'Add'}
                             </button>
                         </div>
                     </div>
@@ -323,21 +357,21 @@ function App() {
             </div>
         `}
 
-        <!-- Admin Kitchen View (KDS Display) -->
+        <!-- Kitchen Display System (KDS) View -->
         ${view === 'admin' && html`
             <div class="kds-container">
                 <div class="kds-header">
                     <div>
-                        <h2 class="kds-title">Active Orders Display</h2>
-                        <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Real-time incoming orders list.</p>
+                        <h2 class="kds-title">Active Order Tickets</h2>
+                        <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">Live order updates via simulated WebSocket subscription.</p>
                     </div>
                 </div>
 
                 <div class="kds-grid">
                     ${kdsOrders.filter(o => o.status !== 'completed').length === 0 ? html`
                         <div class="text-center py-20 w-full" style="grid-column: 1 / -1; color: var(--text-muted);">
-                            <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">😴</span>
-                            <p>No active tickets right now.</p>
+                            <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">📭</span>
+                            <p>No active noodle orders on the board.</p>
                         </div>
                     ` : html`
                         ${kdsOrders.filter(o => o.status !== 'completed').map(order => html`
@@ -353,11 +387,11 @@ function App() {
                                                 <span>${item.quantity}x ${item.name}</span>
                                             </div>
                                             ${item.spice_level > 0 && html`
-                                                <div class="ticket-item-modifiers">🔥 Spice Lvl ${item.spice_level}</div>
+                                                <div class="ticket-item-modifiers">Spice Lvl ${item.spice_level}</div>
                                             `}
                                             ${item.extra_toppings.length > 0 && html`
-                                                <div class="ticket-item-modifiers" style="color: var(--brand-yellow)">
-                                                    ➕ ${item.extra_toppings.join(', ')}
+                                                <div class="ticket-item-modifiers" style="color: var(--brand-yellow); font-size: 0.7rem;">
+                                                    + ${item.extra_toppings.join(', ')}
                                                 </div>
                                             `}
                                         </div>
@@ -377,7 +411,46 @@ function App() {
             </div>
         `}
 
-        <!-- Customization / Modifier Modal -->
+        <!-- Audit Ledger View -->
+        ${view === 'ledger' && html`
+            <div class="ledger-container">
+                <div class="ledger-header">
+                    <h2 class="kds-title">Immutable Audit Trail</h2>
+                    <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">
+                        Simulated trigger-based transactions ledger verifying Level 3 security audit logging.
+                    </p>
+                </div>
+                
+                <table class="ledger-table">
+                    <thead>
+                        <tr>
+                            <th class="ledger-th">TXID</th>
+                            <th class="ledger-th">Type</th>
+                            <th class="ledger-th">Value Change</th>
+                            <th class="ledger-th">Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${ledger.map(tx => html`
+                            <tr class="ledger-tr" key=${tx.id}>
+                                <td class="ledger-td font-display" style="font-weight: 700;">${tx.id}</td>
+                                <td class="ledger-td" style="text-transform: uppercase; font-size: 0.8rem; font-weight: 700;">
+                                    ${tx.type}
+                                </td>
+                                <td class="ledger-td">
+                                    <span class="amount-badge ${tx.amount > 0 ? 'positive' : 'negative'}">
+                                        ${tx.amount > 0 ? '+' : ''}$${tx.amount.toFixed(2)}
+                                    </span>
+                                </td>
+                                <td class="ledger-td text-muted">${new Date(tx.created_at).toLocaleString()}</td>
+                            </tr>
+                        `)}
+                    </tbody>
+                </table>
+            </div>
+        `}
+
+        <!-- Customization Modal -->
         ${customizeItem && html`
             <div>
                 <div class="overlay" onClick=${() => setCustomizeItem(null)}></div>
@@ -386,7 +459,7 @@ function App() {
                         <div class="modal-header">
                             <div>
                                 <h3 class="modal-title">${customizeItem.name}</h3>
-                                <p class="modal-desc">Configure noodle options</p>
+                                <p class="modal-desc">Select modifications</p>
                             </div>
                             <button class="close-btn" onClick=${() => setCustomizeItem(null)}>×</button>
                         </div>
@@ -405,7 +478,7 @@ function App() {
                                 `)}
                             </div>
 
-                            <div class="modal-section-title">Dimsum Add-ons</div>
+                            <div class="modal-section-title">Add-ons</div>
                             <div class="addon-list">
                                 ${ADDONS.map((addon, idx) => {
                                     const isSelected = selectedAddons.some(a => a.name === addon.name);
@@ -432,7 +505,7 @@ function App() {
 
                             <div class="modal-footer-action">
                                 <div>
-                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Total Item Price</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Calculated Price</div>
                                     <span class="modal-total-price">
                                         $${(customizeItem.price + selectedAddons.reduce((s, a) => s + a.price, 0)).toFixed(2)}
                                     </span>
@@ -449,7 +522,7 @@ function App() {
         <div>
             ${cartOpen && html`<div class="overlay" onClick=${() => setCartOpen(false)}></div>`}
             <div class="cart-drawer ${cartOpen ? 'open' : ''}">
-                <div class="cart-header" style="border-bottom: 1px solid var(--border-dark); padding: 1.5rem;">
+                <div class="cart-header">
                     <h2 class="modal-title">Shopping Bag</h2>
                     <button class="close-btn" onClick=${() => setCartOpen(false)}>×</button>
                 </div>
@@ -503,7 +576,7 @@ function App() {
                             disabled=${wallet < cartTotal}
                             onClick=${handleCheckout}
                         >
-                            ${wallet >= cartTotal ? 'Swipe to Order' : 'Insufficient Balance'}
+                            ${wallet >= cartTotal ? 'Pay & Order' : 'Insufficient Balance'}
                         </button>
                     </div>
                 `}
@@ -519,7 +592,7 @@ function App() {
                         <div class="modal-header">
                             <div>
                                 <h3 class="modal-title">Load Wallet</h3>
-                                <p class="modal-desc">Simulated closed-loop wallet top-up</p>
+                                <p class="modal-desc">Select amount to top up</p>
                             </div>
                             <button class="close-btn" onClick=${() => setTopupOpen(false)}>×</button>
                         </div>
@@ -530,7 +603,7 @@ function App() {
                                     <button 
                                         key=${val}
                                         class="topup-opt"
-                                        onClick=${() => { setWallet(prev => prev + val); setTopupOpen(false); showToast(`Loaded $${val.toFixed(2)} to wallet`); }}
+                                        onClick=${() => { handleTopup(val); setTopupOpen(false); }}
                                     >
                                         +$${val}
                                     </button>
