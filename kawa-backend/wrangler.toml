@@ -5,4 +5,4 @@ main = "src/index.ts"
 [[d1_databases]]
 binding = "DB"
 database_name = "kawa-d1"
-database_id = "local-db-kawa"
+database_id = "47e38e49-9ed6-41e6-829b-eb4895102fdd"
