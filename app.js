@@ -26,8 +26,19 @@ function App() {
     const [selectedAddons, setSelectedAddons] = useState([]);
     const [activeCategory, setActiveCategory] = useState('All');
     
+    // Device ID management
+    const [deviceId] = useState(() => {
+        let id = localStorage.getItem('kawa_device_id');
+        if (!id) {
+            id = 'dev_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('kawa_device_id', id);
+        }
+        return id;
+    });
+
     // Track Order
-    const [trackId, setTrackId] = useState('');
+    const [trackId, setTrackId] = useState(() => localStorage.getItem('kawa_last_order') || '');
+
     const [trackedOrder, setTrackedOrder] = useState(null);
     
     // Toast notifications
@@ -41,8 +52,12 @@ function App() {
 
     // Initial fetch (menu, wallet)
     useEffect(() => {
+        if (trackId) localStorage.setItem('kawa_last_order', trackId);
+    }, [trackId]);
+
+    useEffect(() => {
         fetch(`${API_BASE}/menu`).then(r => r.json()).then(setMenu).catch(console.error);
-        fetch(`${API_BASE}/wallet`).then(r => r.json()).then(d => setWallet(d.balance)).catch(console.error);
+        fetch(`${API_BASE}/wallet`, { headers: { 'X-Device-Id': deviceId } }).then(r => r.json()).then(d => setWallet(d.balance)).catch(console.error);
     }, []);
 
     // Polling for real-time views
@@ -173,7 +188,10 @@ function App() {
         try {
             const r = await fetch(`${API_BASE}/wallet/topup`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Device-Id': deviceId
+                },
                 body: JSON.stringify({ amount })
             });
             if (r.ok) {
@@ -194,7 +212,10 @@ function App() {
         try {
             const r = await fetch(`${API_BASE}/orders/checkout`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Device-Id': deviceId
+                },
                 body: JSON.stringify({ total, items: cart })
             });
             if (r.ok) {
