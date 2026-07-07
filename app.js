@@ -3,73 +3,7 @@
 // Clean, high-density Developer Console / POS Terminal interface
 const { html, render, useState, useEffect } = htmPreact;
 
-// ─── Menu Data ───
-const MENU = [
-    {
-        id: 1,
-        name: 'MIE SETAN',
-        desc: 'Savoury, salty, hot chili oil base. Choose your spice level.',
-        price: 3.50,
-        category: 'Noodles',
-        customizable: true
-    },
-    {
-        id: 2,
-        name: 'MIE IBLIS',
-        desc: 'Sweet dark soy glaze tossed with fiery chili paste. Bold and sweet.',
-        price: 3.50,
-        category: 'Noodles',
-        customizable: true
-    },
-    {
-        id: 3,
-        name: 'MIE ANGEL',
-        desc: 'Zero heat. Tossed in aromatic chicken fat, topped with dried chicken floss.',
-        price: 3.00,
-        category: 'Noodles',
-        customizable: false
-    },
-    {
-        id: 4,
-        name: 'UDANG RAMBUTAN',
-        desc: 'Golden minced shrimp balls wrapped in crispy pastry threads (3 pcs).',
-        price: 2.50,
-        category: 'Dimsum',
-        customizable: false
-    },
-    {
-        id: 5,
-        name: 'UDANG KEJU',
-        desc: 'Crispy fried shrimp dumplings stuffed with melted mozzarella (3 pcs).',
-        price: 2.50,
-        category: 'Dimsum',
-        customizable: false
-    },
-    {
-        id: 6,
-        name: 'LUMPIA TAHU',
-        desc: 'Minced chicken & shrimp spring roll in crispy tofu skin wrapper (3 pcs).',
-        price: 2.20,
-        category: 'Dimsum',
-        customizable: false
-    },
-    {
-        id: 7,
-        name: 'ES GENDERUWO',
-        desc: 'Fruity syrup ice loaded with jelly, coco gel, and sweetened milk.',
-        price: 2.00,
-        category: 'Drinks',
-        customizable: false
-    },
-    {
-        id: 8,
-        name: 'ES POCONG',
-        desc: 'Sharp lime juice, sweet basil seeds, and coconut slices over crushed ice.',
-        price: 1.80,
-        category: 'Drinks',
-        customizable: false
-    }
-];
+const API_BASE = 'http://127.0.0.1:8787/api';
 
 const ADDONS = [
     { name: 'Extra Udang Keju (1 pc)', price: 0.80 },
@@ -81,7 +15,8 @@ const CATEGORIES = ['All', 'Noodles', 'Dimsum', 'Drinks'];
 
 function App() {
     const [view, setView] = useState('customer'); // 'customer', 'admin' (KDS), 'ledger' (audit)
-    const [wallet, setWallet] = useState(25.00);
+    const [wallet, setWallet] = useState(0);
+    const [menu, setMenu] = useState([]);
     const [cart, setCart] = useState([]);
     const [cartOpen, setCartOpen] = useState(false);
     const [topupOpen, setTopupOpen] = useState(false);
@@ -91,34 +26,57 @@ function App() {
     const [selectedAddons, setSelectedAddons] = useState([]);
     const [activeCategory, setActiveCategory] = useState('All');
     
+    // Track Order
+    const [trackId, setTrackId] = useState('');
+    const [trackedOrder, setTrackedOrder] = useState(null);
+    
     // Toast notifications
     const [toast, setToast] = useState({ msg: '', show: false });
 
     // KDS tickets
-    const [kdsOrders, setKdsOrders] = useState([
-        {
-            id: 'ord_7812',
-            created_at: new Date(Date.now() - 300000).toISOString(),
-            status: 'preparing',
-            items: [
-                { name: 'MIE SETAN', quantity: 2, spice_level: 5, extra_toppings: ['Extra Udang Keju (1 pc)'] },
-                { name: 'ES GENDERUWO', quantity: 1, spice_level: 0, extra_toppings: [] }
-            ]
-        },
-        {
-            id: 'ord_9012',
-            created_at: new Date(Date.now() - 60000).toISOString(),
-            status: 'pending',
-            items: [
-                { name: 'MIE IBLIS', quantity: 1, spice_level: 8, extra_toppings: ['Extra Pangsit Goreng (2 pcs)'] }
-            ]
-        }
-    ]);
+    const [kdsOrders, setKdsOrders] = useState([]);
 
     // Simulated Immutable Ledger (Level 3 requirement)
-    const [ledger, setLedger] = useState([
-        { id: 'tx_001', amount: 25.00, type: 'topup', created_at: new Date(Date.now() - 600000).toISOString() }
-    ]);
+    const [ledger, setLedger] = useState([]);
+
+    // Initial fetch (menu, wallet)
+    useEffect(() => {
+        fetch(`${API_BASE}/menu`).then(r => r.json()).then(setMenu).catch(console.error);
+        fetch(`${API_BASE}/wallet`).then(r => r.json()).then(d => setWallet(d.balance)).catch(console.error);
+    }, []);
+
+    // Polling for real-time views
+    useEffect(() => {
+        let interval;
+        const fetchData = async () => {
+            if (view === 'admin') {
+                try {
+                    const r = await fetch(`${API_BASE}/orders/kds`);
+                    const data = await r.json();
+                    setKdsOrders(data);
+                } catch(e) {}
+            } else if (view === 'ledger') {
+                try {
+                    const r = await fetch(`${API_BASE}/ledger`);
+                    const data = await r.json();
+                    setLedger(data);
+                } catch(e) {}
+            } else if (view === 'track' && trackId) {
+                try {
+                    const r = await fetch(`${API_BASE}/orders/${trackId}`);
+                    if (r.ok) {
+                        const data = await r.json();
+                        setTrackedOrder(data);
+                    } else {
+                        setTrackedOrder(null);
+                    }
+                } catch(e) {}
+            }
+        };
+        fetchData();
+        interval = setInterval(fetchData, 3000);
+        return () => clearInterval(interval);
+    }, [view, trackId]);
 
     // Track simulated time
     const [timeStr, setTimeStr] = useState('');
@@ -211,67 +169,72 @@ function App() {
         }).filter(Boolean));
     };
 
-    const handleTopup = (amount) => {
-        setWallet(prev => prev + amount);
-        
-        // Log transaction to simulated ledger
-        const txId = `tx_${Math.floor(100 + Math.random() * 900)}`;
-        setLedger(prev => [
-            { id: txId, amount, type: 'topup', created_at: new Date().toISOString() },
-            ...prev
-        ]);
-        showToast(`Loaded $${amount.toFixed(2)} to wallet`);
+    const handleTopup = async (amount) => {
+        try {
+            const r = await fetch(`${API_BASE}/wallet/topup`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ amount })
+            });
+            if (r.ok) {
+                setWallet(prev => prev + amount);
+                showToast(`Loaded $${amount.toFixed(2)} to wallet`);
+                if (view === 'ledger') fetch(`${API_BASE}/ledger`).then(r=>r.json()).then(setLedger);
+            }
+        } catch(e) { showToast('Topup failed'); }
     };
 
-    const handleCheckout = () => {
+    const handleCheckout = async () => {
         const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         if (wallet < total) {
             showToast('Checkout failed: Insufficient funds');
             return;
         }
 
-        setWallet(prev => prev - total);
-
-        // Log transaction to simulated ledger (Immutable audit logging)
-        const txId = `tx_${Math.floor(100 + Math.random() * 900)}`;
-        setLedger(prev => [
-            { id: txId, amount: -total, type: 'purchase', created_at: new Date().toISOString() },
-            ...prev
-        ]);
-
-        // Push order ticket to KDS
-        const newOrderId = `ord_${Math.floor(1000 + Math.random() * 9000)}`;
-        const newTicket = {
-            id: newOrderId,
-            created_at: new Date().toISOString(),
-            status: 'pending',
-            items: cart.map(item => ({
-                name: item.name,
-                quantity: item.quantity,
-                spice_level: item.spice_level,
-                extra_toppings: item.extra_toppings
-            }))
-        };
-
-        setKdsOrders(prev => [newTicket, ...prev]);
-        setCart([]);
-        setCartOpen(false);
-        showToast(`Paid $${total.toFixed(2)}. Ticket: ${newOrderId}`);
+        try {
+            const r = await fetch(`${API_BASE}/orders/checkout`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ total, items: cart })
+            });
+            if (r.ok) {
+                const data = await r.json();
+                setWallet(prev => prev - total);
+                setCart([]);
+                setCartOpen(false);
+                setTrackId(data.orderId);
+                setTrackedOrder(null);
+                setView('track');
+                showToast(`Checkout successful! Invoice: ${data.orderId}`);
+            } else {
+                const err = await r.json();
+                showToast(`Checkout failed: ${err.error}`);
+            }
+        } catch(e) { showToast('Checkout failed'); }
     };
 
-    const handleKdsStatusChange = (orderId, newStatus) => {
-        setKdsOrders(prev => prev.map(ord => {
-            if (ord.id === orderId) {
-                return { ...ord, status: newStatus };
+    const handleKdsStatusChange = async (orderId, newStatus) => {
+        try {
+            const r = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status: newStatus })
+            });
+            if (r.ok) {
+                setKdsOrders(prev => prev.map(ord => {
+                    if (ord.id === orderId) {
+                        return { ...ord, status: newStatus };
+                    }
+                    return ord;
+                }));
+                showToast(`Order ${orderId} updated to ${newStatus}`);
             }
-            return ord;
-        }));
-        showToast(`Order ${orderId} updated to ${newStatus}`);
+        } catch (e) { showToast('Failed to update status'); }
     };
 
     const filteredMenu = activeCategory === 'All'
-        ? MENU
-        : MENU.filter(i => i.category === activeCategory);
+        ? menu
+        : menu.filter(i => i.category === activeCategory);
 
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -287,7 +250,8 @@ function App() {
             
             <div class="nav-controls">
                 <div class="role-selector">
-                    <button class="role-btn ${view === 'customer' ? 'active' : ''}" onClick=${() => setView('customer')}>ORDER</button>
+                    <button class="role-btn ${view === 'customer' ? 'active' : ''}" onClick=${() => setView('customer')}>MENU</button>
+                    <button class="role-btn ${view === 'track' ? 'active' : ''}" onClick=${() => setView('track')}>TRACK</button>
                     <button class="role-btn ${view === 'admin' ? 'active' : ''}" onClick=${() => setView('admin')}>KDS</button>
                     <button class="role-btn ${view === 'ledger' ? 'active' : ''}" onClick=${() => setView('ledger')}>LEDGER</button>
                 </div>
@@ -354,6 +318,58 @@ function App() {
                             </button>
                         </div>
                     </div>
+                `)}
+            </div>
+        `}
+
+        <!-- Track Order View -->
+        ${view === 'track' && html`
+            <div class="track-container">
+                <div class="track-input-group">
+                    <input 
+                        class="track-input" 
+                        type="text" 
+                        placeholder="Enter Invoice ID (e.g. ord_1234)"
+                        value=${trackId}
+                        onInput=${e => setTrackId(e.target.value)}
+                    />
+                    <button class="track-btn" onClick=${() => trackId && setView('track')}>[ SEARCH ]</button>
+                </div>
+
+                ${trackedOrder ? html`
+                    <div class="digital-receipt">
+                        <div class="receipt-header">
+                            <div style="font-size: 0.75rem; color: var(--text-muted-term);">INVOICE</div>
+                            <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-term);">${trackedOrder.id.toUpperCase()}</div>
+                            <div class="receipt-status-badge ${trackedOrder.status}">
+                                ${trackedOrder.status.toUpperCase()}
+                            </div>
+                        </div>
+                        <div class="ticket-items">
+                            ${trackedOrder.items.map((item, idx) => html`
+                                <div class="ticket-item" key=${idx}>
+                                    <div class="ticket-item-header">
+                                        <span>${item.quantity}x ${item.name}</span>
+                                    </div>
+                                    ${item.spice_level > 0 && html`
+                                        <div class="ticket-item-modifiers">>> SPICE LEVEL: ${item.spice_level}</div>
+                                    `}
+                                    ${item.extra_toppings.length > 0 && html`
+                                        <div class="ticket-item-modifiers" style="color: var(--accent-amber);">
+                                            + ${item.extra_toppings.join(', ')}
+                                        </div>
+                                    `}
+                                </div>
+                            `)}
+                        </div>
+                        <div style="text-align: right; font-weight: 700; margin-top: 1rem; color: var(--accent-green);">
+                            TOTAL: $${trackedOrder.total_amount.toFixed(2)}
+                        </div>
+                    </div>
+                ` : (trackId ? html`
+                    <div style="margin-top: 2rem; color: var(--text-muted-term); font-size: 0.85rem;">[ SEARCHING INVOICE... ]</div>
+                ` : html`
+                    <div style="margin-top: 2rem; color: var(--text-muted-term); font-size: 0.85rem;">[ WAITING FOR INVOICE ID ]</div>
                 `)}
             </div>
         `}

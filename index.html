@@ -414,6 +414,74 @@
             background: var(--accent-green);
             color: var(--bg-term);
         }
+        /* ---- Track Order View ---- */
+        .track-container {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            flex-grow: 1;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .track-input-group {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+            max-width: 400px;
+        }
+        .track-input {
+            flex-grow: 1;
+            background: var(--bg-term);
+            border: 1px solid var(--border-term);
+            color: var(--text-term);
+            padding: 0.65rem 0.85rem;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+        .track-input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+        .track-btn {
+            background: transparent;
+            border: 1px solid var(--border-term);
+            color: var(--text-term);
+            padding: 0 1rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .track-btn:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background: var(--surface-card);
+        }
+        .digital-receipt {
+            background: var(--surface-term);
+            border: 1px dashed var(--border-term);
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 400px;
+        }
+        .receipt-header {
+            text-align: center;
+            border-bottom: 1px dashed var(--border-term);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        .receipt-status-badge {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            font-weight: 700;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-term);
+        }
+        .receipt-status-badge.pending { border-color: var(--border-term); color: var(--text-muted-term); }
+        .receipt-status-badge.preparing { border-color: var(--accent-amber); color: var(--accent-amber); }
+        .receipt-status-badge.completed { border-color: var(--accent-green); color: var(--accent-green); background: var(--surface-card); }
 
         /* ---- Audit Ledger View ---- */
         .ledger-container {
