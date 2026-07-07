@@ -3,7 +3,7 @@
 // Clean, high-density Developer Console / POS Terminal interface
 const { html, render, useState, useEffect } = htmPreact;
 
-const API_BASE = 'http://127.0.0.1:8787/api';
+const API_BASE = 'https://kawas-cafe.kelvinanshary.workers.dev/api';
 
 const ADDONS = [
     { name: 'Extra Udang Keju (1 pc)', price: 0.80 },
