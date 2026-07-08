@@ -15,6 +15,7 @@ const CATEGORIES = ['All', 'Noodles', 'Dimsum', 'Drinks'];
 
 function App() {
     const [view, setView] = useState('customer'); // 'customer', 'admin' (KDS), 'ledger' (audit)
+    const [theme, setTheme] = useState(() => localStorage.getItem('kawa_theme') || 'dark');
     const [wallet, setWallet] = useState(0);
     const [menu, setMenu] = useState([]);
     const [cart, setCart] = useState([]);
@@ -59,6 +60,15 @@ function App() {
         fetch(`${API_BASE}/menu`).then(r => r.json()).then(setMenu).catch(console.error);
         fetch(`${API_BASE}/wallet`, { headers: { 'X-Device-Id': deviceId } }).then(r => r.json()).then(d => setWallet(d.balance)).catch(console.error);
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem('kawa_theme', theme);
+        if (theme === 'light') {
+            document.documentElement.classList.add('light-theme');
+        } else {
+            document.documentElement.classList.remove('light-theme');
+        }
+    }, [theme]);
 
     // Polling for real-time views
     useEffect(() => {
@@ -270,6 +280,9 @@ function App() {
             </div>
             
             <div class="nav-controls">
+                <button class="cart-btn" onClick=${() => setTheme(theme === 'dark' ? 'light' : 'dark')} title="Toggle Theme" style="padding: 0.35rem 0.5rem; font-size: 1rem; line-height: 1;">
+                    ${theme === 'dark' ? '☀️' : '🌙'}
+                </button>
                 <div class="role-selector">
                     <button class="role-btn ${view === 'customer' ? 'active' : ''}" onClick=${() => setView('customer')}>MENU</button>
                     <button class="role-btn ${view === 'track' ? 'active' : ''}" onClick=${() => setView('track')}>TRACK</button>

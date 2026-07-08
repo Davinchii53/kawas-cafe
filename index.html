@@ -6,7 +6,7 @@
     <title>KAWA NOODLES — Developer Terminal</title>
     <meta name="description" content="High-throughput spicy noodles and digital wallet system.">
     
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
     
     <style>
         /* =========================================================================
@@ -34,6 +34,25 @@
             --accent-red: #ef4444;          /* Critical status / delete actions */
         }
 
+        :root.light-theme {
+            --bg-term: #f8fafc;
+            --surface-term: #f1f5f9;
+            --surface-card: #ffffff;
+            --border-term: #cbd5e1;
+            --border-focus: #94a3b8;
+            
+            --text-term: #0f172a;
+            --text-muted-term: #64748b;
+            
+            --accent-green: #16a34a;
+            --accent-green-hover: #15803d;
+            
+            --accent-amber: #d97706;
+            --accent-amber-hover: #b45309;
+            
+            --accent-red: #dc2626;
+        }
+
         * { 
             margin: 0; 
             padding: 0; 
@@ -42,7 +61,7 @@
         }
 
         body {
-            font-family: 'JetBrains Mono', 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-term);
             color: var(--text-term);
             line-height: 1.4;
