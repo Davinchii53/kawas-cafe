@@ -110,6 +110,47 @@
             align-items: center;
             gap: 1rem;
         }
+
+        /* Theme Toggle Animation */
+        .theme-toggle-btn {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            border: 1px solid var(--border-term);
+            background: var(--surface-card);
+            color: var(--text-term);
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+        }
+        .theme-toggle-btn:hover {
+            border-color: var(--border-focus);
+        }
+        .theme-toggle-btn svg {
+            position: absolute;
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s ease;
+            width: 16px;
+            height: 16px;
+        }
+        .theme-toggle-btn .sun-icon {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
+        .theme-toggle-btn .moon-icon {
+            opacity: 0;
+            transform: rotate(-90deg) scale(0);
+        }
+        :root.light-theme .theme-toggle-btn .sun-icon {
+            opacity: 0;
+            transform: rotate(90deg) scale(0);
+        }
+        :root.light-theme .theme-toggle-btn .moon-icon {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
         
         /* Terminal Tabs */
         .role-selector {

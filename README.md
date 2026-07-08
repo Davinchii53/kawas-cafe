@@ -10,7 +10,7 @@ This project is built from the ground up to be extremely lightweight, requiring 
 
 *   **Front-End**: Vanilla HTML, CSS, and JavaScript.
 *   **Styling**: Tailwind CSS (via CDN) for rapid UI development.
-*   **Back-End**: Supabase (PostgreSQL) for database, Auth, and Realtime WebSockets.
+*   **Back-End**: Hono web framework running on Cloudflare Workers, with a SQLite database.
 
 ## 3. Front-End (Customer & Admin UI)
 
@@ -23,17 +23,14 @@ This project is built from the ground up to be extremely lightweight, requiring 
 *   **Order Management (KDS)**: A Kitchen Display System where admins view incoming orders in real-time. Admins can update order statuses (Pending -> Preparing -> Completed).
 *   **Inventory Control**: A dashboard for cafe managers to perform CRUD operations on the menu. They can add new seasonal drinks, update prices, or toggle item availability.
 
-## 4. Back-End (Database & Auth)
+## 4. Back-End (Database & API)
 
-### Authentication & Roles
-*   **Customers**: Sign up via email/password to maintain their wallet balance and order history.
-*   **Admins**: Role-based access control (RBAC) enforced via Supabase user metadata, restricting access to the KDS and menu management routes.
+### API Framework
+*   **Hono & Cloudflare Workers**: The backend uses Hono for routing and handles REST API requests, deployed to Cloudflare's edge network.
 
 ### Database Schema (Core Tables)
-*   `profiles`: Links to Supabase Auth. Stores user details and current `wallet_balance`.
-*   `menu_items`: Stores `id`, `name`, `description`, `price`, `category`, and `is_available`.
+*   `profiles`: Stores user details and current `wallet_balance`.
+*   `menu_items`: Stores `id`, `name`, `desc`, `price`, `category`, and a `customizable` flag.
 *   `orders`: Tracks `id`, `user_id`, `total_amount`, `status` (pending/completed/cancelled), and `created_at`.
-*   `order_items`: A join table linking `orders` to `menu_items` with specific quantities.
-
-### Real-Time Functionality
-*   Supabase WebSocket subscriptions (`postgres_changes`) are used on the Admin Order Management page so incoming customer orders instantly pop up without requiring a browser refresh.
+*   `order_items`: A join table linking `orders` to `menu_items` with specific quantities, `spice_level`, and `extra_toppings`.
+*   `ledger`: A dual-entry system tracking wallet deductions and additions.
