@@ -7,7 +7,9 @@ DROP TABLE IF EXISTS profiles;
 
 CREATE TABLE profiles (
     id TEXT PRIMARY KEY,
-    wallet_balance REAL DEFAULT 25.00
+    wallet_balance REAL DEFAULT 0.00,
+    role TEXT DEFAULT 'customer',
+    password TEXT
 );
 
 CREATE TABLE menu_items (
@@ -56,5 +58,6 @@ INSERT INTO menu_items (id, name, desc, price, category, customizable) VALUES
 (7, 'ES GENDERUWO', 'Fruity syrup ice loaded with jelly, coco gel, and sweetened milk.', 2.00, 'Drinks', 0),
 (8, 'ES POCONG', 'Sharp lime juice, sweet basil seeds, and coconut slices over crushed ice.', 1.80, 'Drinks', 0);
 
--- Seed a dummy user for the demo
-INSERT INTO profiles (id, wallet_balance) VALUES ('demo_user', 25.00);
+-- Seed initial users for the demo
+INSERT INTO profiles (id, wallet_balance, role, password) VALUES ('demo_user', 25.00, 'customer', 'password123');
+INSERT INTO profiles (id, wallet_balance, role, password) VALUES ('admin', 0.00, 'admin', '1234');

@@ -1,36 +1,52 @@
-# Kawa Cafe: E-Commerce & Loyalty Web App
+# Kawa's Cafe - System Overview
 
-This project is a streamlined, fictional e-commerce and loyalty web application for a neighborhood cafe. It serves as a comprehensive portfolio piece demonstrating full-stack CRUD operations and real-time state management using a lightweight, Vanilla web stack.
+Kawa's Cafe is a modernized ordering and Kitchen Display System (KDS) built on a lightweight, dependency-free frontend and a Cloudflare Workers + D1 SQLite backend.
 
-## 1. Core Concept
-The project focuses on a grounded, everyday customer experience: browsing a menu, managing a digital wallet, and placing food/drink orders. 
+## Architecture
 
-## 2. Tech Stack
-This project is built from the ground up to be extremely lightweight, requiring no `npm install` or heavy node_modules.
+- **Frontend**: Zero-build Preact + HTM via CDN (`app.js`, `index.html`, `index.css`).
+- **Backend**: Cloudflare Workers running Hono (`kawa-backend/src/index.ts`).
+- **Database**: Cloudflare D1 (SQLite) (`schema.sql`).
 
-*   **Front-End**: Vanilla HTML, CSS, and JavaScript.
-*   **Styling**: Tailwind CSS (via CDN) for rapid UI development.
-*   **Back-End**: Hono web framework running on Cloudflare Workers, with a SQLite database.
+## Recent Refactoring & Features
 
-## 3. Front-End (Customer & Admin UI)
+We recently underwent a massive system overhaul to introduce robust authentication and account management without sacrificing the minimalist UI.
 
-### Customer Storefront
-*   **Digital Menu (Catalog)**: A clean, grid-based menu where customers can browse categories (Coffee, Pastries, Mains) and add items to a cart.
-*   **Digital Wallet (Loyalty/Payments)**: A simulated prepaid balance system replacing standard credit card gateways. Users "add funds" using a mock checkout and view their spending via a transaction ledger.
-*   **Order Checkout**: A simple checkout flow that deducts from the user's digital wallet and pushes the order to the database.
+### 1. Unified Authentication Flow
+- **Single Login Portal**: Customers and Staff now log in through the same unified modal interface.
+- **Passwords over PINs**: The system was migrated from legacy `pin` codes to standard `password` fields across all user roles.
+- **Seamless Routing**: Upon successful login, the system evaluates the user's role and instantly routes them to the correct dashboard:
+  - Customers are routed to the `MENU` view.
+  - Staff are routed to the `KDS` (Kitchen Display System).
 
-### Admin Back-Office
-*   **Order Management (KDS)**: A Kitchen Display System where admins view incoming orders in real-time. Admins can update order statuses (Pending -> Preparing -> Completed).
-*   **Inventory Control**: A dashboard for cafe managers to perform CRUD operations on the menu. They can add new seasonal drinks, update prices, or toggle item availability.
+### 2. Account Registration & Onboarding
+- **Customer Registration**: New customers can seamlessly toggle the login modal to create a new account.
+- **Zero-Balance Start**: Newly registered accounts start with a hard `$0.00` wallet balance.
+- **Conflict Handling**: The backend automatically rejects registration attempts for usernames that already exist (409 Conflict).
 
-## 4. Back-End (Database & API)
+### 3. Admin Account Management
+- **Accounts Dashboard**: Staff have access to a dedicated `ACCOUNTS` management tab.
+- **CRUD Operations**: Admins can view all registered profiles in real-time, create new staff or customer accounts, and irrevocably delete accounts from the system.
+- **Custom Modals**: Destructive actions (like deleting an account) are protected by beautiful, custom-styled confirmation modals that match the neon-dark aesthetic of the Kawa UI, entirely replacing native browser `confirm()` dialogs.
 
-### API Framework
-*   **Hono & Cloudflare Workers**: The backend uses Hono for routing and handles REST API requests, deployed to Cloudflare's edge network.
+## Local Development Setup
 
-### Database Schema (Core Tables)
-*   `profiles`: Stores user details and current `wallet_balance`.
-*   `menu_items`: Stores `id`, `name`, `desc`, `price`, `category`, and a `customizable` flag.
-*   `orders`: Tracks `id`, `user_id`, `total_amount`, `status` (pending/completed/cancelled), and `created_at`.
-*   `order_items`: A join table linking `orders` to `menu_items` with specific quantities, `spice_level`, and `extra_toppings`.
-*   `ledger`: A dual-entry system tracking wallet deductions and additions.
+To run this project locally for testing:
+
+1. **Start the Backend**:
+   ```bash
+   cd kawa-backend
+   npm run dev
+   ```
+   *Note: Ensure you have initialized the local D1 database first using `npx wrangler d1 execute DB --local --file=./schema.sql`.*
+
+2. **Start the Frontend**:
+   Serve the root directory with a local HTTP server:
+   ```bash
+   python -m http.server 8080
+   ```
+   *Note: Open `http://localhost:8080` in your browser. Ensure `API_BASE` in `app.js` points to your local worker (`http://localhost:8787/api`).*
+
+## Default Credentials
+- **Admin**: `admin` / `1234`
+- **Customer**: Create a new account via the UI, or login with legacy test accounts if seeded.

@@ -148,4 +148,59 @@ app.get('/api/orders/:id', async (c) => {
   });
 });
 
+// POST /api/auth/register
+app.post('/api/auth/register', async (c) => {
+  const { id, password } = await c.req.json();
+  if (!id || !password) return c.json({ error: 'ID and Password are required' }, 400);
+
+  const existing = await c.env.DB.prepare('SELECT id FROM profiles WHERE id = ?').bind(id).first();
+  if (existing) return c.json({ error: 'User already exists' }, 409);
+
+  await c.env.DB.prepare('INSERT INTO profiles (id, wallet_balance, role, password) VALUES (?, ?, ?, ?)').bind(id, 0.00, 'customer', password).run();
+  
+  return c.json({ success: true, id, role: 'customer', balance: 0.00 });
+});
+
+// POST /api/auth/login
+app.post('/api/auth/login', async (c) => {
+  const { id, password } = await c.req.json();
+  if (!id || !password) return c.json({ error: 'Credentials required' }, 400);
+
+  let profile = await c.env.DB.prepare('SELECT * FROM profiles WHERE id = ?').bind(id).first();
+  
+  if (!profile) return c.json({ error: 'Account not found' }, 404);
+  if (profile.password !== password) return c.json({ error: 'Invalid password' }, 401);
+
+  return c.json({ success: true, id: profile.id, role: profile.role, balance: profile.wallet_balance });
+});
+
+// GET /api/profiles
+app.get('/api/profiles', async (c) => {
+  const { results } = await c.env.DB.prepare('SELECT id, wallet_balance, role FROM profiles ORDER BY id ASC').all();
+  return c.json(results);
+});
+
+// POST /api/profiles
+app.post('/api/profiles', async (c) => {
+  const { id, role, password, balance } = await c.req.json();
+  if (!id) return c.json({ error: 'ID is required' }, 400);
+  const userRole = role || 'customer';
+  const userBalance = balance !== undefined ? balance : 0.00;
+  
+  try {
+    await c.env.DB.prepare('INSERT INTO profiles (id, wallet_balance, role, password) VALUES (?, ?, ?, ?)')
+      .bind(id, userBalance, userRole, password || null).run();
+    return c.json({ success: true });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 400);
+  }
+});
+
+// DELETE /api/profiles/:id
+app.delete('/api/profiles/:id', async (c) => {
+  const id = c.req.param('id');
+  await c.env.DB.prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
+  return c.json({ success: true });
+});
+
 export default app;

@@ -3,7 +3,7 @@
 // Clean, high-density Developer Console / POS Terminal interface
 const { html, render, useState, useEffect } = htmPreact;
 
-const API_BASE = 'https://kawas-cafe-backend.kelvinanshary.workers.dev/api';
+const API_BASE = 'http://localhost:8787/api';
 
 const ADDONS = [
     { name: 'Extra Udang Keju (1 pc)', price: 0.80 },
@@ -14,7 +14,11 @@ const ADDONS = [
 const CATEGORIES = ['All', 'Noodles', 'Dimsum', 'Drinks'];
 
 function App() {
-    const [view, setView] = useState('customer'); // 'customer', 'admin' (KDS), 'ledger' (audit)
+    const [view, setView] = useState('customer');
+    const [session, setSession] = useState(() => JSON.parse(localStorage.getItem('kawa_session')) || null);
+    const [authMode, setAuthMode] = useState('login'); // 'select', 'customer', 'staff'
+    const [confirmDialog, setConfirmDialog] = useState(null);
+    const [profiles, setProfiles] = useState([]);
     const [theme, setTheme] = useState(() => localStorage.getItem('kawa_theme') || 'dark');
     const [wallet, setWallet] = useState(0);
     const [menu, setMenu] = useState([]);
@@ -27,15 +31,12 @@ function App() {
     const [selectedAddons, setSelectedAddons] = useState([]);
     const [activeCategory, setActiveCategory] = useState('All');
     
-    // Device ID management
-    const [deviceId] = useState(() => {
-        let id = localStorage.getItem('kawa_device_id');
-        if (!id) {
-            id = 'dev_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('kawa_device_id', id);
-        }
-        return id;
-    });
+    const deviceId = session ? session.id : 'unknown';
+
+    useEffect(() => {
+        if (session) localStorage.setItem('kawa_session', JSON.stringify(session));
+        else localStorage.removeItem('kawa_session');
+    }, [session]);
 
     // Track Order
     const [trackId, setTrackId] = useState(() => localStorage.getItem('kawa_last_order') || '');
@@ -85,6 +86,12 @@ function App() {
                     const r = await fetch(`${API_BASE}/ledger`);
                     const data = await r.json();
                     setLedger(data);
+                } catch(e) {}
+            } else if (view === 'accounts') {
+                try {
+                    const r = await fetch(`${API_BASE}/profiles`);
+                    const data = await r.json();
+                    setProfiles(data);
                 } catch(e) {}
             } else if (view === 'track' && trackId) {
                 try {
@@ -270,6 +277,47 @@ function App() {
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+    if (!session) {
+        return html`
+            <div class="app-wrapper" style="justify-content: center; align-items: center; min-height: 100vh;">
+                <div class="modal-box" style="width: 100%; max-width: 360px;">
+                    <div class="modal-header">
+                        <div>
+                            <h3 class="modal-title">${authMode === 'register' ? 'CREATE ACCOUNT' : 'SYSTEM LOGIN'}</h3>
+                            <p class="modal-desc">${authMode === 'register' ? 'Register a new customer account' : 'Enter credentials'}</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap: 1rem; margin-top: 1rem;">
+                        <input type="text" id="loginId" class="track-input" placeholder="Username" />
+                        <input type="password" id="loginPin" class="track-input" placeholder="Password" />
+                        <button class="action-btn primary" onClick=${async () => {
+                            const id = document.getElementById('loginId').value;
+                            const password = document.getElementById('loginPin').value;
+                            if(!id || !password) return showToast('Credentials Required');
+                            try {
+                                const endpoint = authMode === 'register' ? '/auth/register' : '/auth/login';
+                                const res = await fetch(`${API_BASE}${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, password }) });
+                                const data = await res.json();
+                                if(data.success) { setSession(data); setView(data.role === 'customer' ? 'customer' : 'admin'); setWallet(data.balance); }
+                                else showToast(data.error);
+                            } catch(e) { showToast(authMode === 'register' ? 'Registration Failed' : 'Login Failed'); }
+                        }}>${authMode === 'register' ? 'REGISTER' : 'LOGIN'}</button>
+                        <div style="text-align: center; margin-top: 0.5rem;">
+                            ${authMode === 'register' ? html`
+                                <span style="font-size: 0.75rem; color: var(--text-muted-term);">Already have an account? </span>
+                                <a href="#" style="color: var(--accent-green);" onClick=${() => setAuthMode('login')}>Login here</a>
+                            ` : html`
+                                <span style="font-size: 0.75rem; color: var(--text-muted-term);">New customer? </span>
+                                <a href="#" style="color: var(--accent-green);" onClick=${() => setAuthMode('register')}>Create account</a>
+                            `}
+                        </div>
+                    </div>
+                </div>
+                ${toast.show && html`<div style="position:fixed; bottom:20px; right:20px; background:var(--surface-term); border:1px solid var(--border-term); padding:1rem; color:var(--accent-green); z-index:100;">${toast.msg}</div>`}
+            </div>
+        `;
+    }
+
     return html`
         <!-- Navigation -->
         <header class="nav">
@@ -285,10 +333,27 @@ function App() {
                     <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 </button>
                 <div class="role-selector">
-                    <button class="role-btn ${view === 'customer' ? 'active' : ''}" onClick=${() => setView('customer')}>MENU</button>
-                    <button class="role-btn ${view === 'track' ? 'active' : ''}" onClick=${() => setView('track')}>TRACK</button>
-                    <button class="role-btn ${view === 'admin' ? 'active' : ''}" onClick=${() => setView('admin')}>KDS</button>
-                    <button class="role-btn ${view === 'ledger' ? 'active' : ''}" onClick=${() => setView('ledger')}>LEDGER</button>
+                    ${session?.role === 'customer' ? html`
+                        <button class="role-btn ${view === 'customer' ? 'active' : ''}" onClick=${() => setView('customer')}>MENU</button>
+                        <button class="role-btn ${view === 'track' ? 'active' : ''}" onClick=${() => setView('track')}>TRACK</button>
+                        <button class="role-btn" style="color: var(--accent-red)" onClick=${async () => {
+                            setConfirmDialog({
+                                message: 'Are you sure you want to delete your account? This action is irreversible.',
+                                onConfirm: async () => {
+                                    await fetch(`${API_BASE}/profiles/${session.id}`, { method: 'DELETE' });
+                                    setSession(null);
+                                    setAuthMode('login');
+                                    setConfirmDialog(null);
+                                },
+                                onCancel: () => setConfirmDialog(null)
+                            });
+                        }}>DEL_ACCT</button>
+                    ` : html`
+                        <button class="role-btn ${view === 'admin' ? 'active' : ''}" onClick=${() => setView('admin')}>KDS</button>
+                        <button class="role-btn ${view === 'ledger' ? 'active' : ''}" onClick=${() => setView('ledger')}>LEDGER</button>
+                        <button class="role-btn ${view === 'accounts' ? 'active' : ''}" onClick=${() => setView('accounts')}>ACCOUNTS</button>
+                    `}
+                    <button class="role-btn" onClick=${() => { setSession(null); setAuthMode('login'); }}>LOGOUT (${session.id})</button>
                 </div>
                 
                 ${view === 'customer' && html`
@@ -494,6 +559,69 @@ function App() {
                         `)}
                     </tbody>
                 </table>
+            </div>
+        `}
+
+        <!-- Accounts View -->
+        ${view === 'accounts' && html`
+            <div class="ledger-container">
+                <div class="ledger-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2 class="kds-title">ACCOUNTS MANAGEMENT</h2>
+                    <button class="action-btn primary" onClick=${async () => {
+                        const id = prompt('New User ID:');
+                        if (!id) return;
+                        const role = prompt('Role (customer/admin):', 'customer');
+                        const password = prompt('Password:');
+                        await fetch(`${API_BASE}/profiles`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, role, password }) });
+                        fetch(`${API_BASE}/profiles`).then(r => r.json()).then(setProfiles);
+                    }}>+ CREATE</button>
+                </div>
+                <table class="ledger-table">
+                    <thead><tr><th class="ledger-th">ID</th><th class="ledger-th">ROLE</th><th class="ledger-th">BALANCE</th><th class="ledger-th">ACT</th></tr></thead>
+                    <tbody>
+                        ${profiles.map(p => html`
+                            <tr class="ledger-tr" key=${p.id}>
+                                <td class="ledger-td">${p.id}</td>
+                                <td class="ledger-td">${p.role}</td>
+                                <td class="ledger-td">$${p.wallet_balance.toFixed(2)}</td>
+                                <td class="ledger-td">
+                                    <button class="action-btn" style="color:var(--accent-red); border-color:var(--accent-red);" onClick=${async () => {
+                                        setConfirmDialog({
+                                            message: `Delete user "${p.id}" from the system?`,
+                                            onConfirm: async () => {
+                                                await fetch(`${API_BASE}/profiles/${p.id}`, { method: 'DELETE' });
+                                                setProfiles(prev => prev.filter(x => x.id !== p.id));
+                                                setConfirmDialog(null);
+                                            },
+                                            onCancel: () => setConfirmDialog(null)
+                                        });
+                                    }}>DEL</button>
+                                </td>
+                            </tr>
+                        `)}
+                    </tbody>
+                </table>
+            </div>
+        `}
+
+        <!-- Confirm Dialog Modal -->
+        ${confirmDialog && html`
+            <div>
+                <div class="overlay" onClick=${confirmDialog.onCancel}></div>
+                <div class="modal-center">
+                    <div class="modal-box" style="border-color: var(--accent-red); max-width: 320px; text-align: center;">
+                        <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                            <div>
+                                <h3 class="modal-title" style="color: var(--accent-red); margin-bottom: 1rem;">CONFIRM ACTION</h3>
+                                <p class="modal-desc" style="font-size: 1rem; color: var(--text-term);">${confirmDialog.message}</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+                            <button class="action-btn" style="flex: 1;" onClick=${confirmDialog.onCancel}>CANCEL</button>
+                            <button class="action-btn" style="flex: 1; background: var(--accent-red); color: #000; border-color: var(--accent-red);" onClick=${confirmDialog.onConfirm}>CONFIRM</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         `}
 
