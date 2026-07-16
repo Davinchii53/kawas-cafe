@@ -1,18 +1,14 @@
 -- schema.sql
-DROP TABLE IF EXISTS ledger;
-DROP TABLE IF EXISTS order_items;
-DROP TABLE IF EXISTS orders;
-DROP TABLE IF EXISTS menu_items;
-DROP TABLE IF EXISTS profiles;
+-- Safe to re-run: will NOT destroy existing data.
 
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
     id TEXT PRIMARY KEY,
     wallet_balance REAL DEFAULT 0.00,
     role TEXT DEFAULT 'customer',
     password TEXT
 );
 
-CREATE TABLE menu_items (
+CREATE TABLE IF NOT EXISTS menu_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     desc TEXT,
@@ -21,7 +17,7 @@ CREATE TABLE menu_items (
     customizable BOOLEAN DEFAULT 0
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     id TEXT PRIMARY KEY,
     user_id TEXT,
     total_amount REAL,
@@ -29,7 +25,7 @@ CREATE TABLE orders (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     order_id TEXT,
     menu_item_id INTEGER,
@@ -39,7 +35,7 @@ CREATE TABLE order_items (
     extra_toppings TEXT
 );
 
-CREATE TABLE ledger (
+CREATE TABLE IF NOT EXISTS ledger (
     id TEXT PRIMARY KEY,
     user_id TEXT,
     amount REAL,
@@ -47,8 +43,8 @@ CREATE TABLE ledger (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Seed initial menu data
-INSERT INTO menu_items (id, name, desc, price, category, customizable) VALUES
+-- Seed menu data (skip if already exists)
+INSERT OR IGNORE INTO menu_items (id, name, desc, price, category, customizable) VALUES
 (1, 'MIE SETAN', 'Savoury, salty, hot chili oil base. Choose your spice level.', 3.50, 'Noodles', 1),
 (2, 'MIE IBLIS', 'Sweet dark soy glaze tossed with fiery chili paste. Bold and sweet.', 3.50, 'Noodles', 1),
 (3, 'MIE ANGEL', 'Zero heat. Tossed in aromatic chicken fat, topped with dried chicken floss.', 3.00, 'Noodles', 0),
@@ -58,6 +54,6 @@ INSERT INTO menu_items (id, name, desc, price, category, customizable) VALUES
 (7, 'ES GENDERUWO', 'Fruity syrup ice loaded with jelly, coco gel, and sweetened milk.', 2.00, 'Drinks', 0),
 (8, 'ES POCONG', 'Sharp lime juice, sweet basil seeds, and coconut slices over crushed ice.', 1.80, 'Drinks', 0);
 
--- Seed initial users for the demo
-INSERT INTO profiles (id, wallet_balance, role, password) VALUES ('demo_user', 25.00, 'customer', 'password123');
-INSERT INTO profiles (id, wallet_balance, role, password) VALUES ('admin', 0.00, 'admin', '1234');
+-- Seed default users (skip if already exists)
+INSERT OR IGNORE INTO profiles (id, wallet_balance, role, password) VALUES ('demo_user', 25.00, 'customer', 'password123');
+INSERT OR IGNORE INTO profiles (id, wallet_balance, role, password) VALUES ('admin', 0.00, 'admin', '1234');
